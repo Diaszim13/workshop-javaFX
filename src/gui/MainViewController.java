@@ -3,8 +3,10 @@ package gui;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.util.function.Consumer;
 
 import application.Main;
+import department.service.DepartmentService;
 import gui.util.Alerts;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -28,11 +30,17 @@ public class MainViewController implements Initializable {
 	public void onMenuItemSellerAct() {
 		System.out.println("//");
 	}
+	@FXML
 	public void onMenuItemDepartmentAct() {
-		System.out.println("//");
+		LoadView("/gui/DepartmentList.fxml", (DepartmentListController controller) -> {
+			controller.setDepartmentService(new DepartmentService());
+			controller.updateTableView();
+			
+		});
 	}
+	@FXML
 	public void onMenuItemAboutAct() {
-		LoadView("/gui/About.fxml");
+		LoadView("/gui/About.fxml", x -> {});
 	}
 	
 	
@@ -40,7 +48,7 @@ public class MainViewController implements Initializable {
 	public void initialize(URL uri, ResourceBundle rb) {	
 	}
 	
-	private synchronized void LoadView(String absoluteName) {
+	private synchronized <T> void LoadView(String absoluteName, Consumer<T> initializingAction) {
 		try {
 			FXMLLoader loader = new FXMLLoader(getClass().getResource(absoluteName));
 			VBox newVBox = loader.load();
@@ -52,6 +60,9 @@ public class MainViewController implements Initializable {
 			mainVBox.getChildren().clear();
 			mainVBox.getChildren().add(mainMenu);
 			mainVBox.getChildren().addAll(newVBox.getChildren());
+			
+			T controller = loader.getController();
+			initializingAction.accept(controller);
 			
 		}catch(IOException e) {
 			Alerts.showAlert("IO Exception", "Error loading view", e.getMessage(), AlertType.ERROR);
